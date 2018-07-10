@@ -2,15 +2,12 @@ var http = require('http');
 var fs = require('fs');
 const url = require('url');
 var os = require('os');
-
+var helpers = require('./helperFunctions');
 var cl = console.log.bind(console);
-
 
 http.createServer(function(req, res) {
     const qs = url.parse(req.url);
-    //cl('req.url: ', qs.pathname);
     parsedQs = qs.pathname.split('/');
-    //cl('parsedQs: ', parsedQs[1], parsedQs[2]);
 
     if (parsedQs[1] == "date" && parsedQs[2] >= 1 && parsedQs[2] <= 31) {
 
@@ -29,21 +26,21 @@ http.createServer(function(req, res) {
         switch (true) {
             case (int > dd):
                 cl('int>dd');
-                write(int, 'future');
+                helpers.write(int, 'future');
                 break;
             case (int < dd):
                 cl('int<dd');
-                write(int, 'past');
+                helpers.write(int, 'past');
                 break;
             case (int == dd):
                 cl('int==dd');
                 var date = new Date();
                 var hour = date.getHours();
-                if (hour < 12) {
-                    write(int, 'past');
+                if (hour <= 12) {
+                    helpers.write(int, 'past');
                 }
                 if (hour > 12) {
-                    write(int, 'future');
+                    helpers.write(int, 'future');
                 }
                 break;
         }
@@ -57,46 +54,3 @@ http.createServer(function(req, res) {
         }
     }
 }).listen(3000, 'localhost');
-
-function write(int, pastOrFuture) {
-    fs.readFile(pastOrFuture + '.txt', function read(err) {
-        if (err) {
-            fs.writeFile(pastOrFuture + '.txt', logentry(int, pastOrFuture), function read(err) {
-                if (err) {
-                    throw err;
-                }
-                cl('new file added');
-
-            });
-        } else {
-            fs.appendFile(pastOrFuture + '.txt', logentry(int, pastOrFuture), function(err) {
-                if (err) throw err;
-                cl('appended!');
-            });
-
-        }
-    });
-}
-
-function getFormattedDate() {
-    //break date to components
-    var date = new Date();
-    var month = date.getMonth() + 1;
-    var day = date.getDate();
-    var hour = date.getHours();
-    var min = date.getMinutes();
-    var sec = date.getSeconds();
-    //add missing zero string logic
-    month = (month < 10 ? "0" : "") + month;
-    day = (day < 10 ? "0" : "") + day;
-    hour = (hour < 10 ? "0" : "") + hour;
-    min = (min < 10 ? "0" : "") + min;
-    sec = (sec < 10 ? "0" : "") + sec;
-    //create string of formatted date
-    var str = date.getFullYear() + "-" + month + "-" + day + "_" + hour + ":" + min + ":" + sec;
-    return str;
-}
-
-function logentry(int, pastOrFuture) {
-    return "entry timestamp: " + getFormattedDate() + "_day of month: " + int + " has " + pastOrFuture + " for current month" + os.EOL;
-}
